@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
+type Candidate = {
+  id: string;
+  jina: string;
+  jinsia: string;
+  umri: number;
+  kazi: string;
+  simu: string;
+};
+
 import {
   PieChart,
   Pie,
@@ -19,8 +28,21 @@ import {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("candidates")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error) setData(data || []);
+
+    setLoading(false);
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -36,19 +58,6 @@ export default function AdminPage() {
 
     checkUser();
   }, [router]);
-
-  const fetchData = async () => {
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("candidates")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!error) setData(data || []);
-
-    setLoading(false);
-  };
 
   const logout = async () => {
     await supabase.auth.signOut();

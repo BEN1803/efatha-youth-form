@@ -12,11 +12,13 @@ export default function Home() {
     simu: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    await supabase.from("candidates").insert([
+    const { error: insertError } = await supabase.from("candidates").insert([
       {
         jina: form.jina,
         jinsia: form.jinsia,
@@ -25,6 +27,11 @@ export default function Home() {
         simu: form.simu,
       },
     ]);
+
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
 
     setSubmitted(true);
     setForm({ jina: "", jinsia: "ME", umri: "", kazi: "", simu: "" });
@@ -140,11 +147,17 @@ export default function Home() {
               </button>
             </form>
 
-            {submitted && (
-              <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 text-sm font-medium animate-slide-up-sm">
-                ✓ Usajili umefanikiwa!
-              </div>
-            )}
+{submitted && (
+               <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 text-sm font-medium animate-slide-up-sm">
+                 ✓ Usajili umefanikiwa!
+               </div>
+             )}
+
+             {error && (
+               <div className="mt-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 text-sm font-medium animate-slide-up-sm">
+                 ✗ Hitilafu: {error}
+               </div>
+             )}
           </div>
         </div>
       </main>
