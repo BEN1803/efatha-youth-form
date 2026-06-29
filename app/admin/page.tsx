@@ -452,8 +452,8 @@ const ageGroups = [
                            <option value="KE">KE</option>
                          </select>
                        </div>
-                       
-                      <div className="grid grid-cols-2 gap-3 text-xs text-slate-500 font-medium">
+
+                       <div className="grid grid-cols-2 gap-3 text-xs text-slate-500 font-medium">
                          <div>
                            <span className="block text-[10px] uppercase font-bold text-slate-400">Umri</span>
                            <select
@@ -486,7 +486,7 @@ const ageGroups = [
                            />
                          </div>
                        </div>
-                       
+
                        <div className="flex justify-end gap-2 pt-2">
                          <button
                            onClick={cancelEdit}
@@ -512,8 +512,8 @@ const ageGroups = [
                            {d.jinsia}
                          </span>
                        </div>
-                       
-                      <div className="grid grid-cols-3 gap-2 pt-1 text-xs text-slate-500 font-medium">
+
+                       <div className="grid grid-cols-3 gap-2 pt-1 text-xs text-slate-500 font-medium">
                          <div>
                            <span className="block text-[10px] uppercase font-bold text-slate-400">Umri</span>
                            <span className="text-slate-700 mt-0.5 block">{d.umri} miaka</span>
@@ -527,7 +527,7 @@ const ageGroups = [
                            <span className="text-slate-700 mt-0.5 block font-semibold tracking-tight">{d.simu || "—"}</span>
                          </div>
                        </div>
-                       
+
                        <div className="flex justify-end gap-2 pt-2">
                          <button
                            onClick={() => startEdit(d)}
