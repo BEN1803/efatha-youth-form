@@ -8,7 +8,7 @@ type Candidate = {
   id: string;
   jina: string;
   jinsia: string;
-  umri: number;
+  umri: string;
   kazi: string;
   simu: string;
 };
@@ -30,6 +30,8 @@ export default function AdminPage() {
   const router = useRouter();
   const [data, setData] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Partial<Candidate>>({});
 
   const fetchData = async () => {
     setLoading(true);
@@ -64,18 +66,67 @@ export default function AdminPage() {
     router.push("/login");
   };
 
+  const startEdit = (candidate: Candidate) => {
+    setEditingId(candidate.id);
+    setEditValues(candidate);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditValues({});
+  };
+
+  const saveEdit = async (id: string) => {
+    const response = await fetch(`/api/candidates/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editValues),
+    });
+
+    if (response.ok) {
+      setData(
+        data.map((c) => (c.id === id ? { ...c, ...editValues } : c))
+      );
+      setEditingId(null);
+      setEditValues({});
+    }
+  };
+
+  const deleteCandidate = async (id: string) => {
+    if (!confirm("Una uhakika unataka kufuta rekodi hii?")) return;
+
+    const response = await fetch(`/api/candidates/${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      setData(data.filter((c) => c.id !== id));
+    }
+  };
+
   const total = data.length;
   const me = data.filter((d) => d.jinsia === "ME").length;
   const ke = data.filter((d) => d.jinsia === "KE").length;
 
-  const avgAge =
-    data.reduce((sum, d) => sum + (d.umri || 0), 0) / (data.length || 1);
 
-  const ageGroups = [
-    { name: "15-25", value: data.filter(d => d.umri >= 15 && d.umri <= 25).length },
-    { name: "26-36", value: data.filter(d => d.umri >= 26 && d.umri <= 36).length },
-    { name: "37-45", value: data.filter(d => d.umri >= 37 && d.umri <= 45).length },
-  ];
+const ageGroups = [
+  { 
+    name: "13-19", 
+    value: data.filter(d => d.umri === "13-19").length 
+  },
+  { 
+    name: "20-29", 
+    value: data.filter(d => d.umri === "20-29").length 
+  },
+  { 
+    name: "30-39", 
+    value: data.filter(d => d.umri === "30-39").length 
+  },
+  { 
+    name: "40-45", 
+    value: data.filter(d => d.umri === "40-55").length 
+  },
+];
 
   const genderData = [
     { name: "ME (Wanaume)", value: me },
@@ -148,7 +199,6 @@ export default function AdminPage() {
             { label: "Jumla ya Vijana", value: total, unit: "waliosajiliwa", icon: "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z", color: "text-blue-600 bg-blue-50" },
             { label: "Wanaume (ME)", value: me, unit: "vijana", icon: "M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m18c-2.485 0-4.5-4.03-4.5-9S19.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.738.09-1.454.257-2.147", color: "text-indigo-600 bg-indigo-50" },
             { label: "Wanawake (KE)", value: ke, unit: "vijana", icon: "M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5", color: "text-pink-600 bg-pink-50" },
-            { label: "Wastani wa Umri", value: avgAge.toFixed(1), unit: "miaka", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z", color: "text-emerald-600 bg-emerald-50" },
           ].map((card, i) => (
             <div key={i} className="animate-slide-up-sm bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group" style={{ animationDelay: `${i * 50}ms` }}>
               <div className="flex items-center justify-between gap-2">
@@ -272,65 +322,230 @@ export default function AdminPage() {
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead>
-                    <tr className="bg-slate-50/70 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      <th className="px-4 sm:px-6 py-3 sm:py-4">Jina</th>
-                      <th className="px-4 sm:px-6 py-3 sm:py-4">Jinsia</th>
-                      <th className="px-4 sm:px-6 py-3 sm:py-4">Umri</th>
-                      <th className="px-4 sm:px-6 py-3 sm:py-4">Kazi</th>
-                      <th className="px-4 sm:px-6 py-3 sm:py-4 text-right">Simu</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {data.map((d, idx) => (
-                      <tr key={d.id} className="transition-colors duration-150 hover:bg-slate-50/50" style={{ animationDelay: `${idx * 25}ms` }}>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-slate-900">{d.jina}</td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${
-                            d.jinsia === "ME" ? "bg-blue-50 text-blue-700" : "bg-pink-50 text-pink-700"
-                          }`}>
-                            {d.jinsia}
-                          </span>
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-slate-600 font-medium">{d.umri}</td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-slate-600 font-medium">{d.kazi || "—"}</td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 text-slate-600 font-semibold text-right tracking-tight">{d.simu || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
+<thead>
+                     <tr className="bg-slate-50/70 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                       <th className="px-4 sm:px-6 py-3 sm:py-4">Jina</th>
+                       <th className="px-4 sm:px-6 py-3 sm:py-4">Jinsia</th>
+                       <th className="px-4 sm:px-6 py-3 sm:py-4">Umri</th>
+                       <th className="px-4 sm:px-6 py-3 sm:py-4">Kazi</th>
+                       <th className="px-4 sm:px-6 py-3 sm:py-4">Simu</th>
+                       <th className="px-4 sm:px-6 py-3 sm:py-4 text-right">Hatua</th>
+                     </tr>
+                   </thead>
+<tbody className="divide-y divide-slate-100">
+                     {data.map((d, idx) => (
+                       <tr key={d.id} className="transition-colors duration-150 hover:bg-slate-50/50" style={{ animationDelay: `${idx * 25}ms` }}>
+                         {editingId === d.id ? (
+                           <>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4">
+                               <input
+                                 type="text"
+                                 value={editValues.jina || ""}
+                                 onChange={(e) => setEditValues({ ...editValues, jina: e.target.value })}
+                                 className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                               />
+                             </td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4">
+                               <select
+                                 value={editValues.jinsia || ""}
+                                 onChange={(e) => setEditValues({ ...editValues, jinsia: e.target.value })}
+                                 className="px-2 py-1 text-xs font-bold border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                               >
+                                 <option value="ME">ME</option>
+                                 <option value="KE">KE</option>
+                               </select>
+                             </td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4">
+                               <select
+                                 value={editValues.umri || ""}
+                                 onChange={(e) => setEditValues({ ...editValues, umri: e.target.value })}
+                                 className="px-2 py-1 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                               >
+                                 <option value="13-19">13-19</option>
+                                 <option value="20-29">20-29</option>
+                                 <option value="30-39">30-39</option>
+                                 <option value="40-45">40-45</option>
+                               </select>
+                             </td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4">
+                               <input
+                                 type="text"
+                                 value={editValues.kazi || ""}
+                                 onChange={(e) => setEditValues({ ...editValues, kazi: e.target.value })}
+                                 className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                               />
+                             </td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4 text-right space-x-1">
+                               <input
+                                 type="text"
+                                 value={editValues.simu || ""}
+                                 onChange={(e) => setEditValues({ ...editValues, simu: e.target.value })}
+                                 className="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500 inline-block"
+                               />
+                               <button
+                                 onClick={() => saveEdit(d.id)}
+                                 className="inline-flex items-center px-2 py-1 text-xs font-semibold text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors"
+                               >
+                                 Hifadhi
+                               </button>
+                               <button
+                                 onClick={cancelEdit}
+                                 className="inline-flex items-center px-2 py-1 text-xs font-semibold text-slate-600 bg-slate-100 rounded hover:bg-slate-200 transition-colors"
+                               >
+                                 Ghairi
+                               </button>
+                             </td>
+                           </>
+                         ) : (
+                           <>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-slate-900">{d.jina}</td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4">
+                               <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${
+                                 d.jinsia === "ME" ? "bg-blue-50 text-blue-700" : "bg-pink-50 text-pink-700"
+                               }`}>
+                                 {d.jinsia}
+                               </span>
+                             </td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4 text-slate-600 font-medium">{d.umri}</td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4 text-slate-600 font-medium">{d.kazi || "—"}</td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4 text-slate-600 font-semibold text-right tracking-tight">{d.simu || "—"}</td>
+                             <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                               <button
+                                 onClick={() => startEdit(d)}
+                                 className="inline-flex items-center px-2 py-1 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 transition-colors mr-1"
+                               >
+                                 Hariri
+                               </button>
+                               <button
+                                 onClick={() => deleteCandidate(d.id)}
+                                 className="inline-flex items-center px-2 py-1 text-xs font-semibold text-rose-600 bg-rose-50 rounded hover:bg-rose-100 transition-colors"
+                               >
+                                 Futa
+                               </button>
+                             </td>
+                           </>
+                         )}
+                       </tr>
+                     ))}
+                   </tbody>
                 </table>
               </div>
 
               {/* Mobile View: Cards instead of standard wide table */}
               <div className="md:hidden divide-y divide-slate-100">
-                {data.map((d, idx) => (
-                  <div key={d.id} className="p-4 space-y-3 hover:bg-slate-50/50 transition-all duration-200" style={{ animationDelay: `${idx * 25}ms` }}>
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-bold text-slate-900 text-sm">{d.jina}</h3>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide ${
-                        d.jinsia === "ME" ? "bg-blue-50 text-blue-700" : "bg-pink-50 text-pink-700"
-                      }`}>
-                        {d.jinsia}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2 pt-1 text-xs text-slate-500 font-medium">
-                      <div>
-                        <span className="block text-[10px] uppercase font-bold text-slate-400">Umri</span>
-                        <span className="text-slate-700 mt-0.5 block">{d.umri} miaka</span>
-                      </div>
-                      <div>
-                        <span className="block text-[10px] uppercase font-bold text-slate-400">Kazi</span>
-                        <span className="text-slate-700 mt-0.5 block truncate">{d.kazi || "—"}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="block text-[10px] uppercase font-bold text-slate-400">Simu</span>
-                        <span className="text-slate-700 mt-0.5 block font-semibold tracking-tight">{d.simu || "—"}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+{data.map((d, idx) => (
+                   editingId === d.id ? (
+                     <div key={d.id} className="p-4 space-y-3 bg-slate-50/50" style={{ animationDelay: `${idx * 25}ms` }}>
+                       <div className="flex items-center justify-between gap-2">
+                         <input
+                           type="text"
+                           value={editValues.jina || ""}
+                           onChange={(e) => setEditValues({ ...editValues, jina: e.target.value })}
+                           className="flex-1 px-2 py-1 text-sm font-bold border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                         />
+                         <select
+                           value={editValues.jinsia || ""}
+                           onChange={(e) => setEditValues({ ...editValues, jinsia: e.target.value })}
+                           className="px-2 py-1 text-xs font-bold border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                         >
+                           <option value="ME">ME</option>
+                           <option value="KE">KE</option>
+                         </select>
+                       </div>
+                       
+                      <div className="grid grid-cols-2 gap-3 text-xs text-slate-500 font-medium">
+                         <div>
+                           <span className="block text-[10px] uppercase font-bold text-slate-400">Umri</span>
+                           <select
+                             value={editValues.umri || ""}
+                             onChange={(e) => setEditValues({ ...editValues, umri: e.target.value })}
+                             className="w-full mt-1 px-2 py-1 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                           >
+                             <option value="13-19">13-19</option>
+                             <option value="20-29">20-29</option>
+                             <option value="30-39">30-39</option>
+                             <option value="40-45">40-45</option>
+                           </select>
+                         </div>
+                         <div>
+                           <span className="block text-[10px] uppercase font-bold text-slate-400">Kazi</span>
+                           <input
+                             type="text"
+                             value={editValues.kazi || ""}
+                             onChange={(e) => setEditValues({ ...editValues, kazi: e.target.value })}
+                             className="w-full mt-1 px-2 py-1 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                           />
+                         </div>
+                         <div className="col-span-2">
+                           <span className="block text-[10px] uppercase font-bold text-slate-400">Simu</span>
+                           <input
+                             type="text"
+                             value={editValues.simu || ""}
+                             onChange={(e) => setEditValues({ ...editValues, simu: e.target.value })}
+                             className="w-full mt-1 px-2 py-1 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                           />
+                         </div>
+                       </div>
+                       
+                       <div className="flex justify-end gap-2 pt-2">
+                         <button
+                           onClick={cancelEdit}
+                           className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded hover:bg-slate-200 transition-colors"
+                         >
+                           Ghairi
+                         </button>
+                         <button
+                           onClick={() => saveEdit(d.id)}
+                           className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors"
+                         >
+                           Hifadhi
+                         </button>
+                       </div>
+                     </div>
+                   ) : (
+                     <div key={d.id} className="p-4 space-y-3 hover:bg-slate-50/50 transition-all duration-200" style={{ animationDelay: `${idx * 25}ms` }}>
+                       <div className="flex items-center justify-between gap-2">
+                         <h3 className="font-bold text-slate-900 text-sm">{d.jina}</h3>
+                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide ${
+                           d.jinsia === "ME" ? "bg-blue-50 text-blue-700" : "bg-pink-50 text-pink-700"
+                         }`}>
+                           {d.jinsia}
+                         </span>
+                       </div>
+                       
+                      <div className="grid grid-cols-3 gap-2 pt-1 text-xs text-slate-500 font-medium">
+                         <div>
+                           <span className="block text-[10px] uppercase font-bold text-slate-400">Umri</span>
+                           <span className="text-slate-700 mt-0.5 block">{d.umri} miaka</span>
+                         </div>
+                         <div>
+                           <span className="block text-[10px] uppercase font-bold text-slate-400">Kazi</span>
+                           <span className="text-slate-700 mt-0.5 block truncate">{d.kazi || "—"}</span>
+                         </div>
+                         <div className="text-right">
+                           <span className="block text-[10px] uppercase font-bold text-slate-400">Simu</span>
+                           <span className="text-slate-700 mt-0.5 block font-semibold tracking-tight">{d.simu || "—"}</span>
+                         </div>
+                       </div>
+                       
+                       <div className="flex justify-end gap-2 pt-2">
+                         <button
+                           onClick={() => startEdit(d)}
+                           className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 transition-colors"
+                         >
+                           Hariri
+                         </button>
+                         <button
+                           onClick={() => deleteCandidate(d.id)}
+                           className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 rounded hover:bg-rose-100 transition-colors"
+                         >
+                           Futa
+                         </button>
+                       </div>
+                     </div>
+                   )
+                 ))}
+               </div>
             </>
           )}
         </div>

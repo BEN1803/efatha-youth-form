@@ -22,7 +22,7 @@ export default function Home() {
       {
         jina: form.jina,
         jinsia: form.jinsia,
-        umri: Number(form.umri),
+        umri: form.umri,
         kazi: form.kazi,
         simu: form.simu,
       },
@@ -97,34 +97,44 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Umri
-                  </label>
-                  <input
-                    type="number"
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500"
-                    placeholder="Mfano: 20"
-                    value={form.umri}
-                    onChange={(e) => update("umri", e.target.value)}
-                    required
-                  />
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  
+                  {/* AGE CATEGORY */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Umri (Kundi)
+                    </label>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Kazi
-                  </label>
-                  <input
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500"
-                    placeholder="Mfano: Mwanafunzi"
-                    value={form.kazi}
-                    onChange={(e) => update("kazi", e.target.value)}
-                    required
-                  />
+                    <select
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500"
+                      value={form.umri}
+                      onChange={(e) => update("umri", e.target.value)}
+                      required
+                    >
+                      <option value="">Chagua kundi la umri</option>
+                      <option value="13-19">13 - 19</option>
+                      <option value="20-29">20 - 29</option>
+                      <option value="30-39">30 - 39</option>
+                      <option value="40-55">40 - 45</option>
+                    </select>
+                  </div>
+
+                  {/* KAZI */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Kazi
+                    </label>
+
+                    <input
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500"
+                      placeholder="Mfano: Mwanafunzi"
+                      value={form.kazi}
+                      onChange={(e) => update("kazi", e.target.value)}
+                      required
+                    />
+                  </div>
+
                 </div>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
